@@ -15,4 +15,8 @@ Procedure to use the script:
 4. Generate exe execuatable for windows. $: pyinstaller --onefile TimeClock.py
 5. This creates a dist directory with the distributable exe file
 
+This can also be run simply from command line.
+
+$: python TimeClock.py
+
 Hope this helps :-)
