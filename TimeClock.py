@@ -2,6 +2,8 @@ import os
 import time
 import ctypes
 import subprocess
+import pickle
+
 from datetime import date
 from datetime import datetime
 
@@ -59,6 +61,8 @@ def update_time ():
         seconds = str( ((int)( (time_diff%(60*60)) % 60)) )
         
         end_btn.configure(state='normal')
+        
+        
     elif start_btn['text'] == 'Start':
         end_btn.configure(state='disabled')
          
@@ -70,6 +74,9 @@ def update_time ():
         current_time = now.strftime("%H:%M:%S")
         day_record += ' , End Time: ' + str(current_time)
         day_record +=  ' :: ' + hrs + ' Hrs: ' + mins + ' Mins: ' + seconds + ' Secs \n'
+        dict = {'date':str(start_date), 'hrs': hrs, 'mins': mins, 'secs': seconds}
+        pickle.dump( dict, open( "data.pickle", "wb" ) )
+        
         try:
             file_object = open('work_hours.txt', 'a+')
         except:
@@ -91,15 +98,37 @@ def update_time ():
 ################################################
 ################################################    
 
+def close_cb():
+    global day_record, file_object, start_date, hrs, mins, seconds, start_flag, end_flag
+    if mb.askokcancel("Quit", "Do you want to quit?"):
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        day_record += ' , End Time: ' + str(current_time)
+        day_record +=  ' :: ' + hrs + ' Hrs: ' + mins + ' Mins: ' + seconds + ' Secs \n'
+        dict = {'date':str(start_date), 'hrs': hrs, 'mins': mins, 'secs': seconds}
+        pickle.dump( dict, open( "data.pickle", "wb" ) )
+        root.destroy()
+    
 def start (): 
     global day_record, start_date, app_run, hrs, mins, seconds, time_pause, time_start, start_flag, end_flag, previous_lock_state
-    
     start_date = date.today()
-    now = datetime.now()
-    today = now.strftime('%d, %b %Y')
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    day_record += 'Date: ' + str(today) + ' , Start Time: ' + str(current_time)
+
+    if start_flag == False:
+        try:
+            load_dict = pickle.load(open( "data.pickle", "rb" ))
+            if load_dict['date'] == str(start_date):
+                hrs = load_dict['hrs']
+                mins = load_dict['mins']
+                seconds = load_dict['secs']
+        except:
+            pass
+            
+    if day_record == '':
+        now = datetime.now()
+        today = now.strftime('%d, %b %Y')
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        day_record += 'Date: ' + str(today) + ' , Start Time: ' + str(current_time)
     
     app_run = True
     end_flag =  False
@@ -172,4 +201,5 @@ end_btn.grid(row=3, column=0, sticky='nesw')
 
 root.after(10, check_screen)
 root.after(20, update_time)
+root.protocol("WM_DELETE_WINDOW", close_cb)
 root.mainloop()
