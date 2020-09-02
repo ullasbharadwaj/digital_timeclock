@@ -2,6 +2,9 @@ import os
 import time
 import ctypes
 import subprocess
+from datetime import date
+from datetime import datetime
+
 import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
@@ -28,6 +31,7 @@ start_flag = end_flag = False
 hrs = mins = seconds = '0'
 
 app_run = False
+start_date = date.today()
 
 time_label = tk.Label(root, text= 'Work time today: ', fg='green', font=('helvetica', 12, 'bold'))
 time_label.grid(row=1, column=0, sticky='nesw')
@@ -35,11 +39,16 @@ time_label.grid(row=1, column=0, sticky='nesw')
 status_label = tk.Label(root, text= 'Status: Work not started', fg='Black', font=('helvetica', 12, 'bold'))
 status_label.grid(row=4, column=0, sticky='nesw')
 
+previous_day_label = tk.Label(root, text= '', fg='green', font=('helvetica', 12, 'bold'))
+previous_day_label.grid(row=5, column=0, sticky='nesw')
+
+####### Text File to store daily work hours for User Reference #######
+day_record = ''
 ################################################
 ################################################
 
 def update_time ():
-    global hrs, mins, seconds, start_flag, end_flag
+    global day_record, file_object, start_date, hrs, mins, seconds, start_flag, end_flag
     
     if start_flag == True and end_flag == False:
         current_time = time.time()
@@ -48,9 +57,33 @@ def update_time ():
         hrs = str( ((int)(time_diff/(60*60))) )
         mins = str( ((int)( (time_diff%(60*60))/60)) )
         seconds = str( ((int)( (time_diff%(60*60)) % 60)) )
-    
-    if end_flag == True:
+        
+        end_btn.configure(state='normal')
+    elif start_btn['text'] == 'Start':
+        end_btn.configure(state='disabled')
+         
+    if date.today() != start_date or end_flag == True:
+        #import ipdb;ipdb.set_trace()
+        start_date = date.today()
+        previous_day_label.configure(text='Previous Session: ' + hrs + ' Hrs:' + mins + ' Mins:' + seconds + ' Secs ')
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        day_record += ' , End Time: ' + str(current_time)
+        day_record +=  ' :: ' + hrs + ' Hrs: ' + mins + ' Mins: ' + seconds + ' Secs \n'
+        try:
+            file_object = open('work_hours.txt', 'a+')
+        except:
+            pass
+        file_object.write(day_record)
+        file_object.close()
+        day_record = ''
         hrs = mins = seconds = '0'
+        if end_flag == True:
+            end_flag = False
+        if start_flag == True:
+            end_btn.invoke()
+            start_btn.invoke()
+        
         
     time_label.configure(text = 'Work time today: ' + hrs + ' Hrs:' + mins + ' Mins:' + seconds + ' Secs ')
     root.after(20, update_time)
@@ -59,7 +92,15 @@ def update_time ():
 ################################################    
 
 def start (): 
-    global app_run, hrs, mins, seconds, time_pause, time_start, start_flag, end_flag, previous_lock_state
+    global day_record, start_date, app_run, hrs, mins, seconds, time_pause, time_start, start_flag, end_flag, previous_lock_state
+    
+    start_date = date.today()
+    now = datetime.now()
+    today = now.strftime('%d, %b %Y')
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    day_record += 'Date: ' + str(today) + ' , Start Time: ' + str(current_time)
+    
     app_run = True
     end_flag =  False
     previous_lock_state = 'unlocked'
@@ -83,7 +124,6 @@ def end ():
     time_end = time.time()
     end_flag = True
     start_flag = app_run = False
-    hrs = mins = seconds = '0'
     start_btn.configure(text='Start', bg='lawngreen')
     status_label.configure(text='Status: Work ended')
 
@@ -101,7 +141,7 @@ def check_screen():
         outputall = subprocess.check_output(callall)
         outputstringall=str(outputall)
             
-        if process_name in outputstringall:#lock_cnt > 4:
+        if process_name in outputstringall:
             locked = True
         else:
             locked = False
@@ -109,12 +149,12 @@ def check_screen():
         if locked and previous_lock_state == 'unlocked' and start_flag == True:     
             start_btn.invoke()
             previous_lock_state = 'locked'
-            print('locked' + time_label['text'])
+
             
         if locked == False and previous_lock_state == 'locked' and start_flag == False:
             start_btn.invoke()
             previous_lock_state = 'unlocked'
-            print('unlocked'+ time_label['text'])
+
         
     root.after(10, check_screen) 
     
