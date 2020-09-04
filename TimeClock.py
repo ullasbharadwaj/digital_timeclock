@@ -65,7 +65,8 @@ def update_time ():
         
     elif start_btn['text'] == 'Start':
         end_btn.configure(state='disabled')
-         
+    
+    import ipdb;ipdb.set_trace()
     if date.today() != start_date or end_flag == True:
         #import ipdb;ipdb.set_trace()
         start_date = date.today()
@@ -111,8 +112,10 @@ def close_cb():
     
 def start (): 
     global day_record, start_date, app_run, hrs, mins, seconds, time_pause, time_start, start_flag, end_flag, previous_lock_state
-    start_date = date.today()
-
+    
+    if start_btn['text'] == 'Start':
+        start_date = date.today()
+    
     if start_flag == False:
         try:
             load_dict = pickle.load(open( "data.pickle", "rb" ))
