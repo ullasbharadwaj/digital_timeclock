@@ -116,7 +116,7 @@ def start ():
     if start_btn['text'] == 'Start':
         start_date = date.today()
     
-    if start_flag == False:
+    if start_flag == False and start_btn['text'] == 'Start':
         try:
             load_dict = pickle.load(open( "data.pickle", "rb" ))
             if load_dict['date'] == str(start_date):
